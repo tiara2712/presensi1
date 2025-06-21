@@ -27,7 +27,6 @@ class PerizinanController extends Controller
     {
         $id_karyawan = Auth::guard('karyawan')->user()->id_karyawan;
 
-        // Konversi format dari dd-mm-yyyy atau format lainnya ke yyyy-mm-dd
         $tgl_izin = date('Y-m-d', strtotime($request->tgl_izin));
         $status = $request->status;
         $fileName = null;

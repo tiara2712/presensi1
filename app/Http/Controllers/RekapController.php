@@ -48,7 +48,7 @@ class RekapController extends Controller
 
         // $rekap = $query->get();
 
-    //     return view('dashboard.getrekap', compact('rekap'));
+        //return view('dashboard.getrekap', compact('rekap'));
     // }
 
     public function getrekap(Request $request)
@@ -76,7 +76,5 @@ class RekapController extends Controller
 
         return view('dashboard.getrekap', compact('rekap'));
     }
-
-
 
 }
