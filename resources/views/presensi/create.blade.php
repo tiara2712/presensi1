@@ -83,7 +83,7 @@
                         }
                     },
                     error: function () {
-                        Swal.fire('Gagal!', 'Tidak dapat absen, periksa jaringan.', 'error');
+                        Swal.fire('Gagal!', 'Maaf Anda Tidak Menggunakan Jaringan Kantor.', 'error');
                     }
                 });
             });

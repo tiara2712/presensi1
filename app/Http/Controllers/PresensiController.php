@@ -21,90 +21,25 @@ class PresensiController extends Controller
         return view('presensi.create', compact('cek'));
     }
 
-    public function store(Request $request)
-    {
-        $ipClient = $request->header('X-Forwarded-For') ?? $request->ip();
-
-        $ipKantor = '192.168.1.';
-
-        $ipNgrokWhitelist = [
-            '36.73.178.73',
-        ];
-
-        if (!str_starts_with($ipClient, $ipKantor) && !in_array($ipClient, $ipNgrokWhitelist)) {
-            return response("error|Gagal, maaf anda tidak menggunakan jaringan kantor. IP Anda: $ipClient", 403);
-        }
-
-        $id_karyawan = Auth::guard('karyawan')->user()->id_karyawan;
-        $tgl_presensi = date("Y-m-d");
-        $jam = date("H:i:s");
-        $image = $request->image;
-
-        $folderPath = "public/uploads/absensi/";
-        $formatName = $id_karyawan . "-" . $tgl_presensi;
-        $image_parts = explode(";base64,", $image);
-        $image_base64 = base64_decode($image_parts[1]);
-        $fileName = $formatName . ".png";
-        $file = $folderPath . $fileName;
-
-        $cek = DB::table('presensi')
-            ->where('tgl_presensi', $tgl_presensi)
-            ->where('id_karyawan', $id_karyawan)
-            ->count();
-
-        if ($cek > 0) {
-            $data_pulang = [
-                'jam_out' => $jam,
-                'foto_out' => $fileName
-            ];
-
-            $update = DB::table('presensi')
-                ->where('tgl_presensi', $tgl_presensi)
-                ->where('id_karyawan', $id_karyawan)
-                ->update($data_pulang);
-
-            if ($update) {
-                Storage::put($file, $image_base64);
-                return "success|Terima kasih, hati-hati di jalan";
-            } else {
-                return "error|Gagal absen pulang";
-            }
-        } else {
-            $data = [
-                'id_karyawan' => $id_karyawan,
-                'tgl_presensi' => $tgl_presensi,
-                'jam_in' => $jam,
-                'foto_in' => $fileName
-            ];
-
-            $simpan = DB::table('presensi')->insert($data);
-
-            if ($simpan) {
-                Storage::put($file, $image_base64);
-                return "success|Absen masuk berhasil";
-            } else {
-                return "error|Gagal absen masuk";
-            }
-        }
-    }
-
     // public function store(Request $request)
     // {
-    //     $ssid = $request->ssid;
-    //     $gateway_ip = $request->gateway_ip;
+    //     $ipClient = $request->header('X-Forwarded-For') ?? $request->ip();
 
-    //     if (empty($ssid) || empty($gateway_ip)) {
-    //         return response("error|Data jaringan tidak terbaca", 400);
-    //     }
+    //     $ipKantor = '192.168.1.';
 
-    //     if ($ssid !== 'WiFi-Kantor' || $gateway_ip !== '192.168.1.1') {
-    //         return response("error|Absen hanya bisa dari jaringan kantor", 403);
+    //     $ipNgrokWhitelist = [
+    //         '36.74.221.218',
+    //     ];
+
+    //     if (!str_starts_with($ipClient, $ipKantor) && !in_array($ipClient, $ipNgrokWhitelist)) {
+    //         return response("error|Gagal, maaf anda tidak menggunakan jaringan kantor. IP Anda: $ipClient", 403);
     //     }
 
     //     $id_karyawan = Auth::guard('karyawan')->user()->id_karyawan;
     //     $tgl_presensi = date("Y-m-d");
     //     $jam = date("H:i:s");
     //     $image = $request->image;
+
     //     $folderPath = "public/uploads/absensi/";
     //     $formatName = $id_karyawan . "-" . $tgl_presensi;
     //     $image_parts = explode(";base64,", $image);
@@ -112,15 +47,17 @@ class PresensiController extends Controller
     //     $fileName = $formatName . ".png";
     //     $file = $folderPath . $fileName;
 
-    //     $cek = DB::table('presensi')->where('tgl_presensi', $tgl_presensi)
-    //                                 ->where('id_karyawan', $id_karyawan)
-    //                                 ->count();
+    //     $cek = DB::table('presensi')
+    //         ->where('tgl_presensi', $tgl_presensi)
+    //         ->where('id_karyawan', $id_karyawan)
+    //         ->count();
 
     //     if ($cek > 0) {
     //         $data_pulang = [
     //             'jam_out' => $jam,
     //             'foto_out' => $fileName
     //         ];
+
     //         $update = DB::table('presensi')
     //             ->where('tgl_presensi', $tgl_presensi)
     //             ->where('id_karyawan', $id_karyawan)
@@ -141,6 +78,7 @@ class PresensiController extends Controller
     //         ];
 
     //         $simpan = DB::table('presensi')->insert($data);
+
     //         if ($simpan) {
     //             Storage::put($file, $image_base64);
     //             return "success|Absen masuk berhasil";
@@ -149,6 +87,71 @@ class PresensiController extends Controller
     //         }
     //     }
     // }
+
+    public function store(Request $request)
+    {
+
+        $client_ip = $request->ip();
+
+        if (!str_starts_with($client_ip, '192.168.1.')) {
+            return response("error|Absen hanya bisa dari jaringan kantor", 403);
+        }
+
+        $id_karyawan = Auth::guard('karyawan')->user()->id_karyawan;
+        $tgl_presensi = date("Y-m-d");
+        $jam = date("H:i:s");
+        $image = $request->image;
+
+        if (empty($image) || !str_contains($image, ';base64,')) {
+            return response("error|Foto tidak valid", 400);
+        }
+
+        $folderPath = "public/uploads/absensi/";
+        $formatName = $id_karyawan . "-" . $tgl_presensi;
+        $image_parts = explode(";base64,", $image);
+        $image_base64 = base64_decode($image_parts[1]);
+        $fileName = $formatName . ".png";
+        $file = $folderPath . $fileName;
+
+        $cek = DB::table('presensi')
+            ->where('tgl_presensi', $tgl_presensi)
+            ->where('id_karyawan', $id_karyawan)
+            ->count();
+
+        if ($cek > 0) {
+            $data_pulang = [
+                'jam_out' => $jam,
+                'foto_out' => $fileName
+            ];
+            $update = DB::table('presensi')
+                ->where('tgl_presensi', $tgl_presensi)
+                ->where('id_karyawan', $id_karyawan)
+                ->update($data_pulang);
+
+            if ($update) {
+                Storage::put($file, $image_base64);
+                return "success|Terima kasih, hati-hati di jalan";
+            } else {
+                return "error|Gagal absen pulang";
+            }
+        } else {
+            $data = [
+                'id_karyawan' => $id_karyawan,
+                'tgl_presensi' => $tgl_presensi,
+                'jam_in' => $jam,
+                'foto_in' => $fileName
+            ];
+
+            $simpan = DB::table('presensi')->insert($data);
+            if ($simpan) {
+                Storage::put($file, $image_base64);
+                return "success|Absen masuk berhasil";
+            } else {
+                return "error|Gagal absen masuk";
+            }
+        }
+    }
+
 
     public function getpresensi(Request $request)
     {
