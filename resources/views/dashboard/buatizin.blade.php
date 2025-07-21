@@ -26,21 +26,28 @@
                     <div class="col">
                         <div class="form-group">
                             <select name="status" id="status" class="form-control">
-                                <option value="">Izin / Sakit</option>
+                                <option value="">Pilih Izin / Sakit:</option>
                                 <option value="i">Izin</option>
                                 <option value="s">Sakit</option>
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="custom-file-upload" id="fileUpload1">
-                        <input type="file" name="file" id="fileuploadInput" accept=".png, .jpg, .jpeg, .pdf">
+                <div class="row" id="form-keterangan" style="display: none;">
+                    <div class="col">
+                        <div class="form-group">
+                            <textarea name="keterangan" id="keterangan" cols="30" rows="5" class="form-control" placeholder="Keterangan"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" id="form-upload" style="display: none;">
+                    <div class="custom-file-upload">
+                        <input type="file" name="file" id="fileuploadInput" accept=".pdf">
                         <label for="fileuploadInput">
                             <span>
                                 <strong>
-                                    <ion-icon name="cloud-upload-outline" role="img" class="md hydrated" aria-label="cloud upload outline"></ion-icon>
-                                    <i>Tap to Upload</i>
+                                    <ion-icon name="cloud-upload-outline"></ion-icon>
+                                    <i>Upload Surat Sakit</i>
                                 </strong>
                             </span>
                         </label>
@@ -55,13 +62,9 @@
 @endsection
 @push('myscript')
     <script>
-        var currYear = (new Date()).getFullYear();
-        $(document).ready(function() {
-            $(".datepicker").datepicker({
-                format: "yyyy-mm-dd"
-            });
+        $(document).ready(function () {
 
-            $("#tgl_izin").change(function(e) {
+            $("#tgl_izin").change(function (e) {
                 var tgl_izin = $(this).val();
                 $.ajax({
                     type: 'POST',
@@ -71,11 +74,11 @@
                         tgl_izin: tgl_izin
                     },
                     cache: false,
-                    success: function(respond) {
-                        if (respond==1) {
+                    success: function (respond) {
+                        if (respond == 1) {
                             Swal.fire({
                                 title: 'Oops !',
-                                text: 'Anda Sudah Melakukan Input Pengajuan Izin / Sakit Pada Tanggal Tersebut !',
+                                text: 'Anda sudah mengajukan izin/sakit di tanggal tersebut!',
                                 icon: 'warning'
                             }).then((result) => {
                                 $("#tgl_izin").val("");
@@ -85,22 +88,39 @@
                 });
             });
 
-            $("#formizin").submit(function(){
+            $("#status").change(function () {
+                var selected = $(this).val();
+                if (selected === "i") {
+                    $("#form-keterangan").show();
+                    $("#form-upload").hide();
+                    $("#fileuploadInput").val("");
+                } else if (selected === "s") {
+                    $("#form-keterangan").hide();
+                    $("#form-upload").show();
+                    $("#keterangan").val("");
+                } else {
+                    $("#form-keterangan").hide();
+                    $("#form-upload").hide();
+                    $("#keterangan").val("");
+                    $("#fileuploadInput").val("");
+                }
+            });
+
+            $("#formizin").submit(function () {
                 var tgl_izin = $("#tgl_izin").val();
                 var status = $("#status").val();
+
                 if (tgl_izin == "") {
-                    Swal.fire({
-                        title: 'Oops !',
-                        text: 'Tanggal harus di isi',
-                        icon: 'warning'
-                    });
+                    Swal.fire({ title: 'Oops !', text: 'Tanggal harus diisi', icon: 'warning' });
                     return false;
                 } else if (status == "") {
-                    Swal.fire({
-                        title: 'Oops !',
-                        text: 'Status harus di isi',
-                        icon: 'warning'
-                    });
+                    Swal.fire({ title: 'Oops !', text: 'Status harus diisi', icon: 'warning' });
+                    return false;
+                } else if (status == "i" && $("#keterangan").val() == "") {
+                    Swal.fire({ title: 'Oops !', text: 'Keterangan harus diisi untuk izin', icon: 'warning' });
+                    return false;
+                } else if (status == "s" && $("#fileuploadInput").get(0).files.length === 0) {
+                    Swal.fire({ title: 'Oops !', text: 'Upload PDF surat keterangan sakit wajib diisi', icon: 'warning' });
                     return false;
                 }
             });

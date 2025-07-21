@@ -67,11 +67,14 @@ Route::middleware(['auth:user'])->group(function () {
     Route::post('/karyawan/{id_karyawan}/update', [KaryawanController::class, 'update']);
     Route::delete('/karyawan/{id_karyawan}/delete', [KaryawanController::class, 'delete']);
 
+    Route::get('/pengajuanprofil', [KaryawanController::class, 'pengajuanUpdateProfil']);
+    Route::post('/pengajuanprofil/{id}/verifikasi', [KaryawanController::class, 'verifikasiPengajuan']);
+
     Route::post('/getpresensi', [PresensiController::class, 'getpresensi']);
     Route::get('/presensi/laporanrekap', [PresensiController::class, 'laporanrekap']);
     Route::get('/presensi/laporanrekap/cetak', [PresensiController::class, 'cetakPDF'])->name('presensi.laporanrekap.cetak');
-    // Route::get('/presensi/laporan', [PresensiController::class, 'laporan']);
-    // Route::post('/presensi/cetaklaporan', [PresensiController::class, 'cetaklaporan']);
+    Route::get('/presensi/laporan', [PresensiController::class, 'laporan'])->name('presensi.laporan');
+    Route::post('/presensi/cetaklaporan', [PresensiController::class, 'cetaklaporan'])->name('presensi.cetaklaporan');
     // Route::get('/presensi/rekap', [PresensiController::class, 'rekap']);
     // Route::post('/presensi/cetakrekap', [PresensiController::class, 'cetakrekap']);
 

@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\URL;
+use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,8 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // if(config('app.env') == 'local') {
-        //     URL::forceScheme('https');
-        // }
+        if (app()->environment('local')) {
+            Request::setTrustedProxies([
+                '36.74.210.81'
+            ], Request::HEADER_FORWARDED);
+        }
     }
 }

@@ -30,54 +30,72 @@
         <div class="card">
             <div class="card-body text-center">
                 <div class="list-menu">
+
                     <div class="item-menu text-center">
-                        <span class="badge bg-danger" style="position: absolute; top:3px;">{{ $rekappresensi->jmlhadir }}</span>
+                        <span class="badge bg-danger" style="position: absolute; top:3px;">
+                            {{ $rekappresensi->jmlhadir }}
+                        </span>
                         <div class="menu-icon">
-                            <a class="green" style="font-size: 40px;">
-                                <ion-icon name="accessibility"></ion-icon>
+                            <a style="font-size: 40px;">
+                                <ion-icon name="accessibility" style="color: green;"></ion-icon>
                             </a>
                         </div>
-                        <div class="menu-name">
-                            <span class="text-center">Hadir</span>
-                        </div>
+                        <div class="menu-name">Hadir</div>
                     </div>
+
                     <div class="item-menu text-center">
-                        <span class="badge bg-danger" style="position: absolute; top:3px;">{{ $rekapizin->jmlizin }}</span>
+                        <span class="badge bg-danger" style="position: absolute; top:3px;">
+                            {{ $rekapizin->jmlizin }}
+                        </span>
                         <div class="menu-icon">
-                            <a href="" class="primary" style="font-size: 40px;">
-                                <ion-icon name="reader"></ion-icon>
+                            <a style="font-size: 40px;">
+                                <ion-icon name="reader" style="color: blue;"></ion-icon>
                             </a>
                         </div>
-                        <div class="menu-name">
-                            <span class="text-center">Izin</span>
-                        </div>
+                        <div class="menu-name">Izin</div>
                     </div>
+
                     <div class="item-menu text-center">
-                        <span class="badge bg-danger" style="position: absolute; top:3px;">{{ $rekapizin->jmlsakit }}</span>
+                        <span class="badge bg-danger" style="position: absolute; top:3px;">
+                            {{ $rekapizin->jmlsakit }}
+                        </span>
                         <div class="menu-icon">
-                            <a href="" class="danger" style="font-size: 40px;">
-                                <ion-icon name="fitness"></ion-icon>
+                            <a style="font-size: 40px;">
+                                <ion-icon name="fitness" style="color: red;"></ion-icon>
                             </a>
                         </div>
-                        <div class="menu-name">
-                            <span class="text-center">Sakit</span>
-                        </div>
+                        <div class="menu-name">Sakit</div>
                     </div>
+
                     <div class="item-menu text-center">
-                        <span class="badge bg-danger" style="position: absolute; top:3px;">{{ $rekappresensi->jmlterlambat }}</span>
+                        <span class="badge bg-danger" style="position: absolute; top:3px;">
+                            {{ $rekappresensi->jmlterlambat }}
+                        </span>
                         <div class="menu-icon">
-                            <a href="" class="orange" style="font-size: 40px;">
-                                <ion-icon name="timer"></ion-icon>
+                            <a style="font-size: 40px;">
+                                <ion-icon name="timer" style="color: orange;"></ion-icon>
                             </a>
                         </div>
-                        <div class="menu-name">
-                            Telat
-                        </div>
+                        <div class="menu-name">Telat</div>
                     </div>
+
+                    <div class="item-menu text-center">
+                        <span class="badge bg-danger" style="position: absolute; top:3px;">
+                            {{ $rekappresensi->jmlbelumpulang }}
+                        </span>
+                        <div class="menu-icon">
+                            <a style="font-size: 40px;">
+                                <ion-icon name="sad" style="color: pink;"></ion-icon>
+                            </a>
+                        </div>
+                        <div class="menu-name">Tidak hadir</div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
+
     <div class="section mt-2" id="presence-section">
         <div class="todaypresence">
             <div class="row">

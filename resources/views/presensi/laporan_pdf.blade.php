@@ -51,8 +51,6 @@
   </style>
 </head>
 
-<!-- Set "A5", "A4" or "A3" for class name -->
-<!-- Set also "landscape" if you need -->
 <body class="A4">
 
     <section class="sheet padding-10mm">
@@ -65,14 +63,14 @@
                 </td>
                 <td style="text-align: left;">
                     <h3 style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5;">
-                        LAPORAN REKAP KARYAWAN {{ mb_strtoupper($namabulan[$bulan] ?? '') }} {{ $tahun }}<br>
+                        LAPORAN REKAP KARYAWAN <br>
+                        {{ $tanggal_awal_formatted }} s/d {{ $tanggal_akhir_formatted }}<br>
                         NINJA XPRESS GBN BANYUWANGI<br>
                     </h3>
                 </td>
             </tr>
         </table>
 
-        <!-- Tabel Presensi -->
         <table class="tablepresensi">
             <thead>
                 <tr>
@@ -110,7 +108,6 @@
             </tbody>
         </table>
 
-        <!-- Tanda tangan -->
         <table style="width: 100%; font-family: Arial, sans-serif; font-size: 14px; margin-top: 80px;">
             <tr>
                 <td style="width: 100%;">

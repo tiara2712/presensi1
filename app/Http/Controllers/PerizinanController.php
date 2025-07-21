@@ -29,10 +29,19 @@ class PerizinanController extends Controller
 
         $tgl_izin = date('Y-m-d', strtotime($request->tgl_izin));
         $status = $request->status;
+        $keterangan = $request->keterangan;
         $fileName = null;
 
-        if ($request->hasFile('file')) {
+        if ($status === 's') {
+            if (!$request->hasFile('file')) {
+                return redirect()->back()->with('error', 'File PDF wajib diupload untuk sakit');
+            }
+
             $ext = $request->file('file')->getClientOriginalExtension();
+            if (strtolower($ext) !== 'pdf') {
+                return redirect()->back()->with('error', 'File harus berupa PDF');
+            }
+
             $fileName = $id_karyawan . "_" . date('Ymd_His') . "." . $ext;
             $folderPath = "public/uploads/perizinan/";
             $request->file('file')->storeAs($folderPath, $fileName);
@@ -42,22 +51,56 @@ class PerizinanController extends Controller
             'id_karyawan' => $id_karyawan,
             'tgl_izin' => $tgl_izin,
             'status' => $status,
+            'keterangan' => $status === 'i' ? $keterangan : null,
             'file' => $fileName
         ];
 
         $simpan = DB::table('perizinan')->insert($data);
 
         if ($simpan) {
-            return redirect('/izin')->with(['success' => 'Data berhasil disimpan']);
+            return redirect('/izin')->with('success', 'Pengajuan berhasil disimpan');
         } else {
-            return redirect('/izin')->with(['error' => 'Data gagal disimpan']);
+            return redirect('/izin')->with('error', 'Pengajuan gagal disimpan');
         }
     }
+
+    // public function upload(Request $request)
+    // {
+    //     $id_karyawan = Auth::guard('karyawan')->user()->id_karyawan;
+
+    //     $tgl_izin = date('Y-m-d', strtotime($request->tgl_izin));
+    //     $status = $request->status;
+    //     $keterangan = $request->keterangan;
+    //     $fileName = null;
+
+    //     if ($request->hasFile('file')) {
+    //         $ext = $request->file('file')->getClientOriginalExtension();
+    //         $fileName = $id_karyawan . "_" . date('Ymd_His') . "." . $ext;
+    //         $folderPath = "public/uploads/perizinan/";
+    //         $request->file('file')->storeAs($folderPath, $fileName);
+    //     }
+
+    //     $data = [
+    //         'id_karyawan' => $id_karyawan,
+    //         'tgl_izin' => $tgl_izin,
+    //         'status' => $status,
+    //         'keterangan' => $keterangan,
+    //         'file' => $fileName
+    //     ];
+
+    //     $simpan = DB::table('perizinan')->insert($data);
+
+    //     if ($simpan) {
+    //         return redirect('/izin')->with(['success' => 'Data berhasil disimpan']);
+    //     } else {
+    //         return redirect('/izin')->with(['error' => 'Data gagal disimpan']);
+    //     }
+    // }
 
     public function izinsakit(Request $request)
     {
         $query = Perizinan::query();
-        $query->select('id', 'tgl_izin', 'perizinan.id_karyawan', 'nama', 'jabatan', 'status', 'status_approved');
+        $query->select('id', 'tgl_izin', 'perizinan.id_karyawan', 'nama', 'jabatan', 'status', 'file', 'keterangan', 'status_approved');
         $query->join('karyawan', 'perizinan.id_karyawan', '=', 'karyawan.id_karyawan');
         if (!empty($request->start_date) && !empty($request->end_date)) {
             $query->whereBetween('tgl_izin', [$request->start_date, $request->end_date]);

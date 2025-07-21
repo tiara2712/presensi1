@@ -51,42 +51,40 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        Webcam.set({
-            height: 480,
-            width: 640,
-            image_format: 'jpeg',
-            jpeg_quality: 80
-        });
+        window.onload = function () {
+            Webcam.set({
+                height: 480,
+                width: 640,
+                image_format: 'jpeg',
+                jpeg_quality: 80
+            });
 
-        Webcam.attach('.webcam-capture');
+            Webcam.attach('.webcam-capture');
 
-        let image = '';
-
-        $("#takeabsen").click(function () {
-            Webcam.snap(function (uri) {
-                image = uri;
-
-                $.ajax({
-                    type: 'POST',
-                    url: '/presensi/store',
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        image: image
-                    },
-                    success: function (respond) {
-                        let status = respond.split("|");
-                        if (status[0] === "success") {
-                            Swal.fire('Berhasil!', status[1], 'success');
-                            setTimeout(() => location.href = '/dashboard', 1000);
-                        } else {
-                            Swal.fire('Gagal!', status[1], 'error');
+            $(document).on('click', '#takeabsen', function () {
+                Webcam.snap(function (uri) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/presensi/store',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            image: uri
+                        },
+                        success: function (respond) {
+                            let status = respond.split("|");
+                            if (status[0] === "success") {
+                                Swal.fire('Berhasil!', status[1], 'success');
+                                setTimeout(() => location.href = '/dashboard', 1000);
+                            } else {
+                                Swal.fire('Gagal!', status[1], 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Gagal!', 'maaf anda tidak menggunakan jaringan kantor.', 'error');
                         }
-                    },
-                    error: function () {
-                        Swal.fire('Gagal!', 'Maaf Anda Tidak Menggunakan Jaringan Kantor.', 'error');
-                    }
+                    });
                 });
             });
-        });
+        };
     </script>
 @endpush

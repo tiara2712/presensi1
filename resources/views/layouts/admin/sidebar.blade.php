@@ -82,13 +82,13 @@
                     <div data-i18n="Layouts">Laporan</div>
                 </a>
 
-            {{-- <ul class="menu-sub {{ request()->is ('presensi/laporan') ? 'active' : '' }}">
+            <ul class="menu-sub {{ request()->is ('presensi/laporan') ? 'active' : '' }}">
                 <li class="menu-item">
                     <a href="/presensi/laporan" class="menu-link">
-                        <div data-i18n="Without navbar">Presensi</div>
+                        <div data-i18n="Without navbar">Laporan Presensi Karyawan</div>
                     </a>
                 </li>
-            </ul> --}}
+            </ul>
             <ul class="menu-sub {{ request()->is ('presensi/laporanrekap') ? 'active' : '' }}">
                 <li class="menu-item">
                     <a href="/presensi/laporanrekap" class="menu-link">

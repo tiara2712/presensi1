@@ -21,90 +21,23 @@ class PresensiController extends Controller
         return view('presensi.create', compact('cek'));
     }
 
-    // public function store(Request $request)
-    // {
-    //     $ipClient = $request->header('X-Forwarded-For') ?? $request->ip();
-
-    //     $ipKantor = '192.168.1.';
-
-    //     $ipNgrokWhitelist = [
-    //         '36.74.221.218',
-    //     ];
-
-    //     if (!str_starts_with($ipClient, $ipKantor) && !in_array($ipClient, $ipNgrokWhitelist)) {
-    //         return response("error|Gagal, maaf anda tidak menggunakan jaringan kantor. IP Anda: $ipClient", 403);
-    //     }
-
-    //     $id_karyawan = Auth::guard('karyawan')->user()->id_karyawan;
-    //     $tgl_presensi = date("Y-m-d");
-    //     $jam = date("H:i:s");
-    //     $image = $request->image;
-
-    //     $folderPath = "public/uploads/absensi/";
-    //     $formatName = $id_karyawan . "-" . $tgl_presensi;
-    //     $image_parts = explode(";base64,", $image);
-    //     $image_base64 = base64_decode($image_parts[1]);
-    //     $fileName = $formatName . ".png";
-    //     $file = $folderPath . $fileName;
-
-    //     $cek = DB::table('presensi')
-    //         ->where('tgl_presensi', $tgl_presensi)
-    //         ->where('id_karyawan', $id_karyawan)
-    //         ->count();
-
-    //     if ($cek > 0) {
-    //         $data_pulang = [
-    //             'jam_out' => $jam,
-    //             'foto_out' => $fileName
-    //         ];
-
-    //         $update = DB::table('presensi')
-    //             ->where('tgl_presensi', $tgl_presensi)
-    //             ->where('id_karyawan', $id_karyawan)
-    //             ->update($data_pulang);
-
-    //         if ($update) {
-    //             Storage::put($file, $image_base64);
-    //             return "success|Terima kasih, hati-hati di jalan";
-    //         } else {
-    //             return "error|Gagal absen pulang";
-    //         }
-    //     } else {
-    //         $data = [
-    //             'id_karyawan' => $id_karyawan,
-    //             'tgl_presensi' => $tgl_presensi,
-    //             'jam_in' => $jam,
-    //             'foto_in' => $fileName
-    //         ];
-
-    //         $simpan = DB::table('presensi')->insert($data);
-
-    //         if ($simpan) {
-    //             Storage::put($file, $image_base64);
-    //             return "success|Absen masuk berhasil";
-    //         } else {
-    //             return "error|Gagal absen masuk";
-    //         }
-    //     }
-    // }
-
     public function store(Request $request)
     {
+        $ipClient = $request->ip();
 
-        $client_ip = $request->ip();
-
-        if (!str_starts_with($client_ip, '192.168.1.')) {
-            return response("error|Absen hanya bisa dari jaringan kantor", 403);
+        if (!str_starts_with(trim($ipClient), '10.252.68.')) {
+            return response("error|Gagal, maaf anda tidak menggunakan jaringan kantor. IP Anda: $ipClient", 403);
         }
+
+        // // Jika IP ngrok, set ipClient menjadi IP kantor default untuk disimpan
+        // if (in_array($ipClient, $ipNgrokWhitelist)) {
+        //     $ipClient = '192.168.1.99'; // contoh default IP kantor
+        // }
 
         $id_karyawan = Auth::guard('karyawan')->user()->id_karyawan;
         $tgl_presensi = date("Y-m-d");
         $jam = date("H:i:s");
         $image = $request->image;
-
-        if (empty($image) || !str_contains($image, ';base64,')) {
-            return response("error|Foto tidak valid", 400);
-        }
 
         $folderPath = "public/uploads/absensi/";
         $formatName = $id_karyawan . "-" . $tgl_presensi;
@@ -121,8 +54,10 @@ class PresensiController extends Controller
         if ($cek > 0) {
             $data_pulang = [
                 'jam_out' => $jam,
-                'foto_out' => $fileName
+                'foto_out' => $fileName,
+                'ip_address' => $ipClient
             ];
+
             $update = DB::table('presensi')
                 ->where('tgl_presensi', $tgl_presensi)
                 ->where('id_karyawan', $id_karyawan)
@@ -139,10 +74,12 @@ class PresensiController extends Controller
                 'id_karyawan' => $id_karyawan,
                 'tgl_presensi' => $tgl_presensi,
                 'jam_in' => $jam,
-                'foto_in' => $fileName
+                'foto_in' => $fileName,
+                'ip_address' => $ipClient
             ];
 
             $simpan = DB::table('presensi')->insert($data);
+
             if ($simpan) {
                 Storage::put($file, $image_base64);
                 return "success|Absen masuk berhasil";
@@ -151,7 +88,6 @@ class PresensiController extends Controller
             }
         }
     }
-
 
     public function getpresensi(Request $request)
     {
@@ -178,139 +114,23 @@ class PresensiController extends Controller
         return view('presensi.getpresensi', compact('presensi'));
     }
 
-    public function laporan()
+    public function laporan(Request $request)
     {
-        $namabulan = ["", "Januari", "Februari", " Maret", "April", "Mei", "Juni", "Juli", "Agustus", " September", "Oktober", "November", "Desember"];
+        $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         $karyawan = DB::table('karyawan')->orderBy('nama')->get();
-        return view("presensi.laporan", compact('namabulan', 'karyawan'));
-    }
-
-    public function cetaklaporan(Request $request)
-    {
-        $id_karyawan = $request->id_karyawan;
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
-
-        $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        $karyawan = DB::table('karyawan')->where('id_karyawan', $id_karyawan)->first();
-        $presensi = DB::table('presensi')->where('id_karyawan', $id_karyawan)->whereRaw('MONTH(tgl_presensi)="'.$bulan. '"')->whereRaw('YEAR(tgl_presensi)="' . $tahun . '"')->orderBy('tgl_presensi')->get();
-
-        $pdf = Pdf::loadView('presensi.cetaklaporan', compact('namabulan', 'bulan', 'tahun', 'karyawan', 'presensi'));
-        return $pdf->stream('laporan-rekap-presensi.pdf');
-    }
-
-    public function rekap()
-    {
-        $namabulan = ["", "Januari", "Februari", " Maret", "April", "Mei", "Juni", "Juli", "Agustus", " September", "Oktober", "November", "Desember"];
-
-        return view("presensi.rekap", compact('namabulan'));
-    }
-
-    // public function cetakrekap(Request $request)
-    // {
-    //     $bulan = $request->bulan;
-    //     $tahun = $request->tahun;
-    //     $rekap = DB::table('presensi')
-    //         ->selectRaw('presensi.id_karyawan, nama,
-    //             MAX(DAY(tgl_presensi) = 1,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_1,
-    //             MAX(DAY(tgl_presensi) = 2,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_2,
-    //             MAX(DAY(tgl_presensi) = 3,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_3,
-    //             MAX(DAY(tgl_presensi) = 4,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_4,
-    //             MAX(DAY(tgl_presensi) = 5,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_5,
-    //             MAX(DAY(tgl_presensi) = 6,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_6,
-    //             MAX(DAY(tgl_presensi) = 7,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_7,
-    //             MAX(DAY(tgl_presensi) = 8,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_8,
-    //             MAX(DAY(tgl_presensi) = 9,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_9,
-    //             MAX(DAY(tgl_presensi) = 10,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_10,
-    //             MAX(DAY(tgl_presensi) = 11,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_11,
-    //             MAX(DAY(tgl_presensi) = 12,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_12,
-    //             MAX(DAY(tgl_presensi) = 13,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_13,
-    //             MAX(DAY(tgl_presensi) = 14,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_14,
-    //             MAX(DAY(tgl_presensi) = 15,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_15,
-    //             MAX(DAY(tgl_presensi) = 16,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_16,
-    //             MAX(DAY(tgl_presensi) = 17,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_17,
-    //             MAX(DAY(tgl_presensi) = 18,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_18,
-    //             MAX(DAY(tgl_presensi) = 19,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_19,
-    //             MAX(DAY(tgl_presensi) = 20,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_20,
-    //             MAX(DAY(tgl_presensi) = 21,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_21,
-    //             MAX(DAY(tgl_presensi) = 22,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_22,
-    //             MAX(DAY(tgl_presensi) = 23,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_23,
-    //             MAX(DAY(tgl_presensi) = 24,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_24,
-    //             MAX(DAY(tgl_presensi) = 25,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_25,
-    //             MAX(DAY(tgl_presensi) = 26,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_26,
-    //             MAX(DAY(tgl_presensi) = 27,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_27,
-    //             MAX(DAY(tgl_presensi) = 28,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_28,
-    //             MAX(DAY(tgl_presensi) = 29,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_29,
-    //             MAX(DAY(tgl_presensi) = 30,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_30,
-    //             MAX(DAY(tgl_presensi) = 31,CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")),"") as tgl_31')
-    //         ->join('karyawan', 'presensi.id_karyawan', '=', 'karyawan.id_karyawan')
-    //         ->whereRaw('MONTH(tgl_presensi)= "' . $bulan . '"')
-    //         ->whereRaw('YEAR(tgl_presensi)= "' . $tahun . '"')
-    //         ->groupByRaw('presensi.id_karyawan, nama')
-    //         ->get();
-    //     dd($rekap);
-    //     // return view();
-    // }
-
-    public function cetakrekap(Request $request)
-    {
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
-        $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-
-        $selectRaw = 'presensi.id_karyawan, nama';
-
-        for ($i = 1; $i <= 31; $i++) {
-            $selectRaw .= ',
-                MAX(CASE WHEN DAY(tgl_presensi) = ' . $i . ' THEN CONCAT(jam_in, "-", IFNULL(jam_out, "00:00:00")) ELSE "" END) as tgl_' . $i;
-        }
-
-        $rekap = DB::table('presensi')
-            ->selectRaw($selectRaw)
-            ->join('karyawan', 'presensi.id_karyawan', '=', 'karyawan.id_karyawan')
-            ->whereMonth('tgl_presensi', $bulan)
-            ->whereYear('tgl_presensi', $tahun)
-            ->groupBy('presensi.id_karyawan', 'nama')
-            ->get();
-
-        // dd($rekap);
-        // return view('presensi.cetakrekap', compact('rekap', 'bulan', 'tahun', 'namabulan'));
-        $pdf = PDF::loadView('presensi.cetakrekap', compact('rekap', 'bulan', 'tahun', 'namabulan'))
-        ->setPaper('A4', 'landscape');
-
-        return $pdf->stream('rekap-presensi.pdf');
-    }
-
-    public function laporanrekap(Request $request)
-    {
-        $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        $karyawan = Karyawan::all();
         $rekap = [];
 
-        $hari_awal = $request->hari_awal;
-        $hari_akhir = $request->hari_akhir;
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
+        if ($request->start_date && $request->end_date && $request->id_karyawan) {
+            $tanggal_awal = Carbon::parse($request->start_date)->startOfDay();
+            $tanggal_akhir = Carbon::parse($request->end_date)->endOfDay();
 
-        if ($tahun && $bulan) {
-            $hari_awal = $hari_awal ?: 1;
-            $hari_akhir = $hari_akhir ?: Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->day;
-            $tanggal_awal = Carbon::createFromDate($tahun, $bulan, $hari_awal)->startOfDay();
-            $tanggal_akhir = Carbon::createFromDate($tahun, $bulan, $hari_akhir)->endOfDay();
-        } elseif ($tahun) {
-            $tanggal_awal = Carbon::createFromDate($tahun, 1, 1)->startOfDay();
-            $tanggal_akhir = Carbon::createFromDate($tahun, 12, 31)->endOfDay();
-        } else {
-            $tanggal_awal = Carbon::create(2025, 5, 25)->startOfDay();
-            $tanggal_akhir = now()->endOfDay();
-        }
+            $daftarTanggal = [];
+            for ($date = $tanggal_awal->copy(); $date->lte($tanggal_akhir); $date->addDay()) {
+                $daftarTanggal[] = $date->toDateString();
+            }
 
-        $daftarTanggal = [];
-        for ($date = $tanggal_awal->copy(); $date->lte($tanggal_akhir); $date->addDay()) {
-            $daftarTanggal[] = $date->toDateString();
-        }
+            $k = DB::table('karyawan')->where('id_karyawan', $request->id_karyawan)->first();
 
-        foreach ($karyawan as $k) {
             $jumlah_hadir = 0;
             $jumlah_terlambat = 0;
             $jumlah_izin = 0;
@@ -319,28 +139,7 @@ class PresensiController extends Controller
             $jumlah_belum_absen_pulang = 0;
             $jumlah_jam_tambahan = 0;
 
-            $tgl_presensi_pertama = DB::table('presensi')
-                ->where('id_karyawan', $k->id_karyawan)
-                ->orderBy('tgl_presensi', 'asc')
-                ->value('tgl_presensi');
-
-            $tgl_izin_pertama = DB::table('perizinan')
-                ->where('id_karyawan', $k->id_karyawan)
-                ->where('status_approved', 1)
-                ->orderBy('tgl_izin', 'asc')
-                ->value('tgl_izin');
-
-            $mulai_absen = collect([$tgl_presensi_pertama, $tgl_izin_pertama])->filter()->min();
-
-            if (!$mulai_absen) {
-                continue;
-            }
-
             foreach ($daftarTanggal as $tanggal) {
-                if ($tanggal < $mulai_absen) {
-                    continue;
-                }
-
                 $presensi = DB::table('presensi')
                     ->where('id_karyawan', $k->id_karyawan)
                     ->whereDate('tgl_presensi', $tanggal)
@@ -352,33 +151,24 @@ class PresensiController extends Controller
                     ->where('status_approved', 1)
                     ->first();
 
-                if ($presensi && $presensi->jam_in) {
+                if ($presensi && $presensi->jam_in && $presensi->jam_out) {
                     if ($presensi->jam_in <= '09:00:00') {
                         $jumlah_hadir++;
                     } else {
                         $jumlah_terlambat++;
                     }
 
-                    if (!$presensi->jam_out || $presensi->jam_out == '') {
-                        $jumlah_belum_absen_pulang++;
-                    }
-
                     if ($presensi->jam_out > '17:00:00') {
                         try {
                             $jam_out = Carbon::createFromFormat('H:i:s', $presensi->jam_out);
                             $batas_awal = Carbon::createFromFormat('H:i:s', '17:00:00');
-                            $batas_akhir = Carbon::createFromFormat('H:i:s', '23:59:59');
-
-                            if ($jam_out > $batas_akhir) {
-                                $jam_out = $batas_akhir;
-                            }
-
-                            $selisih_jam = $jam_out->diffInHours($batas_awal);
-                            $jumlah_jam_tambahan += $selisih_jam;
+                            $jumlah_jam_tambahan += $jam_out->diffInHours($batas_awal);
                         } catch (\Exception $e) {
                             continue;
                         }
                     }
+                } elseif ($presensi && $presensi->jam_in && !$presensi->jam_out) {
+                    $jumlah_belum_absen_pulang++;
                 }
 
                 if ($izin) {
@@ -394,7 +184,14 @@ class PresensiController extends Controller
                 }
             }
 
-            $rekap[] = (object)[
+            $presensi_terakhir = DB::table('presensi')
+                ->where('id_karyawan', $k->id_karyawan)
+                ->orderByDesc('tgl_presensi')
+                ->first();
+
+            $ip_terakhir = $presensi_terakhir ? $presensi_terakhir->ip_address : '-';
+
+            $rekap[] = (object) [
                 'id_karyawan' => $k->id_karyawan,
                 'nama' => $k->nama,
                 'jumlah_hadir' => $jumlah_hadir,
@@ -404,6 +201,218 @@ class PresensiController extends Controller
                 'jumlah_belum_absen' => $jumlah_belum_absen,
                 'jumlah_belum_absen_pulang' => $jumlah_belum_absen_pulang,
                 'jumlah_jam_tambahan' => $jumlah_jam_tambahan,
+                'ip_address' => $ip_terakhir,
+            ];
+        }
+
+        return view("presensi.laporan", compact('namabulan', 'karyawan', 'rekap'));
+    }
+
+    public function cetaklaporan(Request $request)
+    {
+        $rekap = [];
+
+        if ($request->start_date && $request->end_date && $request->id_karyawan) {
+            $tanggal_awal = Carbon::parse($request->start_date)->startOfDay();
+            $tanggal_akhir = Carbon::parse($request->end_date)->endOfDay();
+
+            $tanggal_awal_formatted = $tanggal_awal->translatedFormat('d F Y');
+            $tanggal_akhir_formatted = $tanggal_akhir->translatedFormat('d F Y');
+
+            $daftarTanggal = [];
+            for ($date = $tanggal_awal->copy(); $date->lte($tanggal_akhir); $date->addDay()) {
+                $daftarTanggal[] = $date->toDateString();
+            }
+
+            $karyawan = DB::table('karyawan')
+                ->where('id_karyawan', $request->id_karyawan)
+                ->select('id_karyawan', 'nama', 'jabatan', 'foto')
+                ->first();
+
+            if (!$karyawan) {
+                return back()->with('error', 'Karyawan tidak ditemukan.');
+            }
+
+            $jumlah_hadir = 0;
+            $jumlah_terlambat = 0;
+            $jumlah_izin = 0;
+            $jumlah_sakit = 0;
+            $jumlah_belum_absen = 0;
+            $jumlah_belum_absen_pulang = 0;
+            $jumlah_jam_tambahan = 0;
+
+            foreach ($daftarTanggal as $tanggal) {
+                $presensi = DB::table('presensi')
+                    ->where('id_karyawan', $karyawan->id_karyawan)
+                    ->whereDate('tgl_presensi', $tanggal)
+                    ->first();
+
+                $izin = DB::table('perizinan')
+                    ->where('id_karyawan', $karyawan->id_karyawan)
+                    ->whereDate('tgl_izin', $tanggal)
+                    ->where('status_approved', 1)
+                    ->first();
+
+                if ($presensi && $presensi->jam_in && $presensi->jam_out) {
+                    if ($presensi->jam_in <= '09:00:00') {
+                        $jumlah_hadir++;
+                    } else {
+                        $jumlah_terlambat++;
+                    }
+
+                    if ($presensi->jam_out > '17:00:00') {
+                        try {
+                            $jam_out = Carbon::createFromFormat('H:i:s', $presensi->jam_out);
+                            $batas_awal = Carbon::createFromFormat('H:i:s', '17:00:00');
+                            $jumlah_jam_tambahan += $jam_out->diffInHours($batas_awal);
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+                } elseif ($presensi && $presensi->jam_in && !$presensi->jam_out) {
+                    $jumlah_belum_absen_pulang++;
+                }
+
+                if ($izin) {
+                    if ($izin->status === 'i') {
+                        $jumlah_izin++;
+                    } elseif ($izin->status === 's') {
+                        $jumlah_sakit++;
+                    }
+                }
+
+                if (!$presensi && !$izin) {
+                    $jumlah_belum_absen++;
+                }
+            }
+
+            $presensi_terakhir = DB::table('presensi')
+                ->where('id_karyawan', $karyawan->id_karyawan)
+                ->orderByDesc('tgl_presensi')
+                ->first();
+
+            $ip_terakhir = $presensi_terakhir->ip_address ?? '-';
+
+            $rekap[] = (object)[
+                'id_karyawan' => $karyawan->id_karyawan,
+                'nama' => $karyawan->nama,
+                'jabatan' => $karyawan->jabatan,
+                'foto' => $karyawan->foto,
+                'jumlah_hadir' => $jumlah_hadir,
+                'jumlah_terlambat' => $jumlah_terlambat,
+                'jumlah_izin' => $jumlah_izin,
+                'jumlah_sakit' => $jumlah_sakit,
+                'jumlah_belum_absen' => $jumlah_belum_absen,
+                'jumlah_belum_absen_pulang' => $jumlah_belum_absen_pulang,
+                'jumlah_jam_tambahan' => $jumlah_jam_tambahan,
+                'ip_address' => $ip_terakhir,
+            ];
+        } else {
+            $tanggal_awal_formatted = '-';
+            $tanggal_akhir_formatted = '-';
+        }
+
+        $pdf = Pdf::loadView('presensi.cetaklaporan', [
+            'rekap' => $rekap,
+            'tanggal_awal_formatted' => $tanggal_awal_formatted,
+            'tanggal_akhir_formatted' => $tanggal_akhir_formatted,
+        ])->setPaper('A4', 'landscape');
+
+        return $pdf->stream('cetaklaporan.pdf');
+    }
+
+    public function laporanrekap(Request $request)
+    {
+        $namabulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        $karyawanQuery = Karyawan::query();
+
+        if ($request->has('nama') && $request->nama) {
+            $karyawanQuery->where('nama', 'like', '%' . $request->nama . '%');
+        }
+
+        $karyawan = $karyawanQuery->get();
+        $rekap = [];
+
+        $tanggal_awal = $request->start_date ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
+        $tanggal_akhir = $request->end_date ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfMonth();
+
+        $daftarTanggal = [];
+        for ($date = $tanggal_awal->copy(); $date->lte($tanggal_akhir); $date->addDay()) {
+            $daftarTanggal[] = $date->toDateString();
+        }
+
+        foreach ($karyawan as $k) {
+            $jumlah_hadir = 0;
+            $jumlah_terlambat = 0;
+            $jumlah_izin = 0;
+            $jumlah_sakit = 0;
+            $jumlah_belum_absen = 0;
+            $jumlah_belum_absen_pulang = 0;
+            $jumlah_jam_tambahan = 0;
+
+            foreach ($daftarTanggal as $tanggal) {
+                $presensi = DB::table('presensi')
+                    ->where('id_karyawan', $k->id_karyawan)
+                    ->whereDate('tgl_presensi', $tanggal)
+                    ->first();
+
+                $izin = DB::table('perizinan')
+                    ->where('id_karyawan', $k->id_karyawan)
+                    ->whereDate('tgl_izin', $tanggal)
+                    ->where('status_approved', 1)
+                    ->first();
+
+                if ($presensi && $presensi->jam_in && $presensi->jam_out) {
+                    if ($presensi->jam_in <= '09:00:00') {
+                        $jumlah_hadir++;
+                    } else {
+                        $jumlah_terlambat++;
+                    }
+
+                    if ($presensi->jam_out > '17:00:00') {
+                        try {
+                            $jam_out = Carbon::createFromFormat('H:i:s', $presensi->jam_out);
+                            $batas_awal = Carbon::createFromFormat('H:i:s', '17:00:00');
+                            $jumlah_jam_tambahan += $jam_out->diffInHours($batas_awal);
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+                } elseif ($presensi && $presensi->jam_in && !$presensi->jam_out) {
+                    $jumlah_belum_absen_pulang++;
+                }
+
+                if ($izin) {
+                    if ($izin->status === 'i') {
+                        $jumlah_izin++;
+                    } elseif ($izin->status === 's') {
+                        $jumlah_sakit++;
+                    }
+                }
+
+                if (!$presensi && !$izin) {
+                    $jumlah_belum_absen++;
+                }
+            }
+
+            // $presensi_terakhir = DB::table('presensi')
+            //     ->where('id_karyawan', $k->id_karyawan)
+            //     ->orderByDesc('tgl_presensi')
+            //     ->first();
+
+            // $ip_terakhir = $presensi_terakhir ? $presensi_terakhir->ip_address : '-';
+
+            $rekap[] = (object) [
+                'id_karyawan' => $k->id_karyawan,
+                'nama' => $k->nama,
+                'jumlah_hadir' => $jumlah_hadir,
+                'jumlah_terlambat' => $jumlah_terlambat,
+                'jumlah_izin' => $jumlah_izin,
+                'jumlah_sakit' => $jumlah_sakit,
+                'jumlah_belum_absen' => $jumlah_belum_absen,
+                'jumlah_belum_absen_pulang' => $jumlah_belum_absen_pulang,
+                'jumlah_jam_tambahan' => $jumlah_jam_tambahan,
+                // 'ip_address' => $ip_terakhir,
             ];
         }
 
@@ -416,23 +425,11 @@ class PresensiController extends Controller
         $karyawan = Karyawan::all();
         $rekap = [];
 
-        $hari_awal = $request->hari_awal;
-        $hari_akhir = $request->hari_akhir;
-        $bulan = $request->bulan;
-        $tahun = $request->tahun;
+        $tanggal_awal = $request->start_date ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->startOfMonth();
+        $tanggal_akhir = $request->end_date ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfMonth();
 
-        if ($tahun && $bulan) {
-            $hari_awal = $hari_awal ?: 1;
-            $hari_akhir = $hari_akhir ?: Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->day;
-            $tanggal_awal = Carbon::createFromDate($tahun, $bulan, $hari_awal)->startOfDay();
-            $tanggal_akhir = Carbon::createFromDate($tahun, $bulan, $hari_akhir)->endOfDay();
-        } elseif ($tahun) {
-            $tanggal_awal = Carbon::createFromDate($tahun, 1, 1)->startOfDay();
-            $tanggal_akhir = Carbon::createFromDate($tahun, 12, 31)->endOfDay();
-        } else {
-            $tanggal_awal = Carbon::create(2025, 5, 25)->startOfDay();
-            $tanggal_akhir = now()->endOfDay();
-        }
+        $tanggal_awal_formatted = $tanggal_awal->translatedFormat('d F Y');
+        $tanggal_akhir_formatted = $tanggal_akhir->translatedFormat('d F Y');
 
         $daftarTanggal = [];
         for ($date = $tanggal_awal->copy(); $date->lte($tanggal_akhir); $date->addDay()) {
@@ -532,7 +529,7 @@ class PresensiController extends Controller
             ];
         }
 
-        $pdf = \PDF::loadView('presensi.laporan_pdf', compact('rekap', 'namabulan', 'bulan', 'tahun', 'tanggal_awal', 'tanggal_akhir'));
+        $pdf = \PDF::loadView('presensi.laporan_pdf', compact('rekap', 'namabulan', 'tanggal_awal_formatted', 'tanggal_akhir_formatted'));
         return $pdf->stream('laporan-rekap-presensi.pdf');
     }
 

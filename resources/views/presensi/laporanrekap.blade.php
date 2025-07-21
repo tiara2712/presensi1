@@ -6,50 +6,47 @@
 
     <form action="/presensi/laporanrekap" method="GET" class="row g-3 align-items-end my-3">
         @csrf
-        <div class="col-md-2">
-            <label class="form-label">Start Date</label>
-            <select name="hari_awal" class="form-select">
-                <option value="">Pilih Hari</option>
-                @for ($i = 1; $i <= 31; $i++)
-                    <option value="{{ $i }}" {{ request('hari_awal') == $i ? 'selected' : '' }}>{{ $i }}</option>
-                @endfor
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">End Date</label>
-            <select name="hari_akhir" class="form-select">
-                <option value="">Pilih Hari</option>
-                @for ($i = 1; $i <= 31; $i++)
-                    <option value="{{ $i }}" {{ request('hari_akhir') == $i ? 'selected' : '' }}>{{ $i }}</option>
-                @endfor
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Bulan</label>
-            <select name="bulan" class="form-select">
-                <option value="">Pilih Bulan</option>
-                @for ($i = 1; $i <= 12; $i++)
-                    <option value="{{ $i }}" {{ request('bulan') == $i ? 'selected' : '' }}>{{ $namabulan[$i] }}</option>
-                @endfor
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Tahun</label>
-            <select name="tahun" class="form-select">
-                <option value="">Pilih Tahun</option>
-                @php
-                    $tahunmulai = 2024;
-                    $tahunsekarang = date('Y');
-                @endphp
-                @for ($i = $tahunmulai; $i <= $tahunsekarang; $i++)
-                    <option value="{{ $i }}" {{ request('tahun') == $i ? 'selected' : '' }}>{{ $i }}</option>
-                @endfor
-            </select>
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-40">
-                <i class='bx bx-search'></i> Cari
-            </button>
+        <div class="row g-2 align-items-end mb-2">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" name="start_date" class="form-control" value="{{ Request('start_date') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" name="end_date" class="form-control" value="{{ Request('end_date') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="nama" class="form-label">Nama Karyawan</label>
+                <input type="text" name="nama" class="form-control" value="{{ request('nama') }}" placeholder="Nama Karyawan">
+            </div>
+        {{-- </div> --}}
+            {{-- <div class="col-md-2">
+                <label class="form-label">Bulan</label>
+                <select name="bulan" class="form-select">
+                    <option value="">Pilih Bulan</option>
+                    @for ($i = 1; $i <= 12; $i++)
+                        <option value="{{ $i }}" {{ request('bulan') == $i ? 'selected' : '' }}>{{ $namabulan[$i] }}</option>
+                    @endfor
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tahun</label>
+                <select name="tahun" class="form-select">
+                    <option value="">Pilih Tahun</option>
+                    @php
+                        $tahunmulai = 2024;
+                        $tahunsekarang = date('Y');
+                    @endphp
+                    @for ($i = $tahunmulai; $i <= $tahunsekarang; $i++)
+                        <option value="{{ $i }}" {{ request('tahun') == $i ? 'selected' : '' }}>{{ $i }}</option>
+                    @endfor
+                </select>
+            </div> --}}
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-40">
+                    <i class='bx bx-search'></i> Cari
+                </button>
+            </div>
         </div>
         <div class="col-12 d-flex justify-content-end mt-2">
             <a href="{{ route('presensi.laporanrekap.cetak', request()->query()) }}" target="_blank" class="btn btn-danger">
@@ -73,6 +70,7 @@
                         <th>Jumlah Belum Absen Presensi</th>
                         <th>Jumlah Belum Absen Pulang</th>
                         <th>Jumlah Lembur</th>
+                        {{-- <th>IP Karyawan</th> --}}
                     </tr>
                 </thead>
                 <tbody>
@@ -88,6 +86,7 @@
                             <td>{{ $r->jumlah_belum_absen }}</td>
                             <td>{{ $r->jumlah_belum_absen_pulang }}</td>
                             <td>{{ $r->jumlah_jam_tambahan }} jam</td>
+                            {{-- <td>{{ $r->ip_address }}</td> --}}
                         </tr>
                     @empty
                         <tr>

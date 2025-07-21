@@ -45,6 +45,11 @@
             </div>
             <div class="form-group boxed">
                 <div class="input-wrapper">
+                    <input type="text" class="form-control" value="{{ $karyawan->jabatan }}" name="jabatan" placeholder="Jabatan" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group boxed">
+                <div class="input-wrapper">
                     <input type="password" class="form-control" name="password" placeholder="Password" autocomplete="off">
                 </div>
             </div>
@@ -54,7 +59,7 @@
                     <span>
                         <strong>
                             <ion-icon name="cloud-upload-outline" role="img" class="md hydrated" aria-label="cloud upload outline"></ion-icon>
-                            <i>Tap to Upload</i>
+                            <i>Upload Foto</i>
                         </strong>
                     </span>
                 </label>
@@ -63,7 +68,7 @@
                 <div class="input-wrapper">
                     <button type="submit" class="btn btn-danger btn-block">
                         <ion-icon name="refresh-outline"></ion-icon>
-                        Update
+                        Ajukan Perubahan
                     </button>
                 </div>
             </div>

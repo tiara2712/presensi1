@@ -84,4 +84,59 @@ class KaryawanController extends Controller
         }
     }
 
+    public function pengajuanUpdateProfil()
+    {
+        $pengajuan = DB::table('pengajuan_update_profil')
+            ->join('karyawan', 'pengajuan_update_profil.id_karyawan', '=', 'karyawan.id_karyawan')
+            ->select('pengajuan_update_profil.*', 'karyawan.nama as nama_lama')
+            ->orderBy('pengajuan_update_profil.created_at', 'desc')
+            ->get();
+
+        return view('admin.karyawan.pengajuanprofil', compact('pengajuan'));
+    }
+
+    public function verifikasiPengajuan(Request $request, $id)
+    {
+        $pengajuan = DB::table('pengajuan_update_profil')->where('id', $id)->first();
+
+        if (!$pengajuan) {
+            return back()->with('warning', 'Pengajuan tidak ditemukan.');
+        }
+
+        if ($request->aksi == 'setuju') {
+            $data = [];
+
+            if (!is_null($pengajuan->nama)) {
+                $data['nama'] = $pengajuan->nama;
+            }
+
+            if (!is_null($pengajuan->no_hp)) {
+                $data['no_hp'] = $pengajuan->no_hp;
+            }
+
+            if (!is_null($pengajuan->jabatan)) {
+                $data['jabatan'] = $pengajuan->jabatan;
+            }
+
+            if (!is_null($pengajuan->password)) {
+                $data['password'] = $pengajuan->password;
+            }
+
+            if (!is_null($pengajuan->foto)) {
+                $data['foto'] = $pengajuan->foto;
+            }
+
+            if (empty($data)) {
+                return back()->with('warning', 'Tidak ada data yang dapat diperbarui.');
+            }
+
+            DB::table('karyawan')->where('id_karyawan', $pengajuan->id_karyawan)->update($data);
+            DB::table('pengajuan_update_profil')->where('id', $id)->update(['status' => 'disetujui']);
+        } else {
+            DB::table('pengajuan_update_profil')->where('id', $id)->update(['status' => 'ditolak']);
+        }
+
+        return back()->with('success', 'Pengajuan telah diverifikasi.');
+    }
+
 }
